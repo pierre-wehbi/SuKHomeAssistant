@@ -1,3 +1,5 @@
+import { initViewerExtensions, clearCache } from './viewer-extensions.js';
+
 async function getAccessToken(callback) {
     try {
         const resp = await fetch('/api/auth/token');
@@ -6,7 +8,7 @@ async function getAccessToken(callback) {
         const { access_token, expires_in } = await resp.json();
         callback(access_token, expires_in);
     } catch (err) {
-        alert('Could not obtain access token. See the console for more details.');
+        alert('Could not obtain access token. See console for more details.');
         console.error(err);        
     }
 }
@@ -21,18 +23,27 @@ export function initViewer(container) {
             const viewer = new Autodesk.Viewing.GuiViewer3D(container, config);
             viewer.start();
             viewer.setTheme('light-theme');
+            
+            // Initialize viewer extensions
+            initViewerExtensions(viewer);
+            
             resolve(viewer);
         });
     });
 }
 
 export function loadModel(viewer, urn) {
+    // Clear the cache when loading a new model
+    clearCache();
+    
     function onDocumentLoadSuccess(doc) {
         viewer.loadDocumentNode(doc, doc.getRoot().getDefaultGeometry());
     }
+    
     function onDocumentLoadFailure(code, message) {
         alert('Could not load model. See console for more details.');
         console.error(message);
     }
+
     Autodesk.Viewing.Document.load('urn:' + urn, onDocumentLoadSuccess, onDocumentLoadFailure);
 }

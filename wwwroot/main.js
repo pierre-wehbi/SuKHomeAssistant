@@ -1,5 +1,6 @@
 import { initViewer, loadModel } from './viewer.js';
 import { initTree } from './sidebar.js';
+import { initHomeAssistant } from './ha-integration.js';
 
 const login = document.getElementById('login');
 try {
@@ -19,6 +20,9 @@ try {
         }
         const viewer = await initViewer(document.getElementById('preview'));
         initTree('#tree', (id) => loadModel(viewer, Autodesk.Viewing.toUrlSafeBase64(id)));
+        
+        // Initialize Home Assistant integration
+        initHomeAssistant();
     } else {
         login.innerText = 'Login';
         login.onclick = () => window.location.replace('/api/auth/login');

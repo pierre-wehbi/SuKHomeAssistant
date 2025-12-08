@@ -14,7 +14,7 @@
 
 <body>
     <div id="header">
-        <img class="logo" src="https://cdn.autodesk.io/logo/black/stacked.png" alt="Autodesk Platform Services">
+        <img class="logo" src="Logo_architekten.png" alt="SuK Logo">
         <span class="title">SuK Home Assistant</span>
         <button id="login" style="visibility: hidden;">Login</button>
     </div>
@@ -22,6 +22,27 @@
         <div id="tree"></div>
     </div>
     <div id="preview"></div>
+    <div id="ha-panel">
+        <div class="ha-header">
+            <h3>Home Assistant Monitor</h3>
+            <button id="toggle-ha-panel" title="Toggle Panel">◀</button>
+        </div>
+        <div class="ha-content">
+            <div class="ha-status-container">
+                <div class="status-item">
+                    <h4>Toilet Status</h4>
+                    <div id="occupancyStatus" class="status-value">Unknown</div>
+                </div>
+                <div class="status-item">
+                    <h4>Light Status</h4>
+                    <div id="lightStatus" class="status-value">Unknown</div>
+                </div>
+            </div>
+            <div class="connection-status">
+                <span id="ha-connection-status" class="status disconnected">Connecting...</span>
+            </div>
+        </div>
+    </div>
     <script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
     <script src="https://unpkg.com/inspire-tree@4.3.1/dist/inspire-tree.js"></script>

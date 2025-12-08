@@ -1,5 +1,6 @@
 const express = require('express');
 const { getAuthorizationUrl, authCallbackMiddleware, authRefreshMiddleware, getUserProfile } = require('../services/aps.js');
+const { getConfig } = require('../services/homeassistant.js');
 
 let router = express.Router();
 
@@ -24,6 +25,15 @@ router.get('/api/auth/profile', authRefreshMiddleware, async function (req, res,
     try {
         const profile = await getUserProfile(req.internalOAuthToken.access_token);
         res.json({ name: `${profile.name}` });
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.get('/api/auth/ha-config', function (req, res, next) {
+    try {
+        const config = getConfig();
+        res.json(config);
     } catch (err) {
         next(err);
     }
