@@ -18,6 +18,45 @@ export function clearCache() {
 }
 
 /**
+ * Wait for property database to be ready
+ * @param {Autodesk.Viewing.Viewer3D} viewer - The viewer instance
+ * @returns {Promise<void>}
+ */
+export function waitForPropertyDb(viewer) {
+    return new Promise((resolve) => {
+        const model = viewer?.model || currentViewer?.model;
+        
+        if (!model) {
+            console.warn('No model loaded');
+            resolve();
+            return;
+        }
+        
+        // Check if property database is already loaded
+        const propertyDb = model.getPropertyDb();
+        if (propertyDb) {
+            console.log('Property database already available');
+            resolve();
+            return;
+        }
+        
+        // Wait for property database to load
+        const checkPropertyDb = () => {
+            const pdb = model.getPropertyDb();
+            if (pdb) {
+                console.log('Property database now available');
+                resolve();
+            } else {
+                // Check again after a short delay
+                requestAnimationFrame(checkPropertyDb);
+            }
+        };
+        
+        checkPropertyDb();
+    });
+}
+
+/**
  * Find elements by property name and value
  * @param {string} propertyName - The property name to search for (e.g., 'ha-Room')
  * @param {string} propertyValue - The property value to match (e.g., 'WC')

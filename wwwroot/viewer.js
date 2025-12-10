@@ -1,4 +1,4 @@
-import { initViewerExtensions, clearCache } from './viewer-extensions.js';
+import { initViewerExtensions, clearCache, waitForPropertyDb } from './viewer-extensions.js';
 
 async function getAccessToken(callback) {
     try {
@@ -37,7 +37,31 @@ export function loadModel(viewer, urn) {
     clearCache();
     
     function onDocumentLoadSuccess(doc) {
-        viewer.loadDocumentNode(doc, doc.getRoot().getDefaultGeometry());
+        const viewable = doc.getRoot().getDefaultGeometry();
+        
+        // Set up event listener for object tree created (when properties are ready)
+        const onObjectTreeCreated = () => {
+            console.log('Object tree created, checking if properties are ready...');
+            
+            // Remove the event listener to prevent multiple calls
+            viewer.removeEventListener(Autodesk.Viewing.OBJECT_TREE_CREATED_EVENT, onObjectTreeCreated);
+            
+            // Wait for property database to be ready
+            waitForPropertyDb(viewer).then(() => {
+                console.log('Property database ready, notifying modules');
+                // Now notify modules to reapply colors
+                import('./ha-toilet.js').then(module => {
+                    if (module.onModelLoaded) {
+                        module.onModelLoaded();
+                    }
+                });
+            });
+        };
+        
+        viewer.addEventListener(Autodesk.Viewing.OBJECT_TREE_CREATED_EVENT, onObjectTreeCreated);
+        
+        // Load the document node
+        viewer.loadDocumentNode(doc, viewable);
     }
     
     function onDocumentLoadFailure(code, message) {
