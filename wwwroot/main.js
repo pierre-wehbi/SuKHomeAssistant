@@ -1,6 +1,8 @@
-import { initViewer, loadModel } from './viewer.js';
-import { initTree } from './sidebar.js';
+// import { initViewer, loadModel } from './viewer.js';
+import { initViewer } from './viewer.js';
+// import { initTree } from './sidebar.js';
 import { initHomeAssistant } from './ha-integration.js';
+import { loadConfiguredModel } from './model-loader.js';
 
 const login = document.getElementById('login');
 try {
@@ -18,8 +20,12 @@ try {
                 document.body.removeChild(iframe);
             };
         }
+        
         const viewer = await initViewer(document.getElementById('preview'));
-        initTree('#tree', (id) => loadModel(viewer, Autodesk.Viewing.toUrlSafeBase64(id)));
+        // initTree('#tree', (id) => loadModel(viewer, Autodesk.Viewing.toUrlSafeBase64(id)));
+        
+        // Load the configured model
+        await loadConfiguredModel(viewer);
         
         // Initialize Home Assistant integration
         initHomeAssistant();

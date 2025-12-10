@@ -1,6 +1,7 @@
 const express = require('express');
 const { getAuthorizationUrl, authCallbackMiddleware, authRefreshMiddleware, getUserProfile } = require('../services/aps.js');
 const { getConfig } = require('../services/homeassistant.js');
+const { getModelConfig } = require('../services/model-config.js');
 
 let router = express.Router();
 
@@ -33,6 +34,15 @@ router.get('/api/auth/profile', authRefreshMiddleware, async function (req, res,
 router.get('/api/auth/ha-config', function (req, res, next) {
     try {
         const config = getConfig();
+        res.json(config);
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.get('/api/auth/model-config', function (req, res, next) {
+    try {
+        const config = getModelConfig();
         res.json(config);
     } catch (err) {
         next(err);
