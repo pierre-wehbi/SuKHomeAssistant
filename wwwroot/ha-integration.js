@@ -1,6 +1,7 @@
 import { connect, disconnect } from './ha-entityState.js';
 import { initLight, loadLightState, resetLightStatus } from './ha-light.js';
 import { initToilet, loadToiletState, resetToiletStatus } from './ha-toilet.js';
+import { initCoffee, loadCoffeeState, resetCoffeeStatus } from './ha-coffee.js';
 
 export function initHomeAssistant() {
     const statusEl = document.getElementById('ha-connection-status');
@@ -10,10 +11,12 @@ export function initHomeAssistant() {
     
     const occupancyStatusEl = document.getElementById('occupancyStatus');
     const lightStatusEl = document.getElementById('lightStatus');
+    const coffeeStatusEl = document.getElementById('coffeeStatus');
     
-    // Initialize toilet and light modules
+    // Initialize toilet, light, and coffee modules
     initToilet(occupancyStatusEl);
     initLight(lightStatusEl);
+    initCoffee(coffeeStatusEl);
     
     // Panel toggle functionality
     toggleBtn.addEventListener('click', () => {
@@ -35,6 +38,7 @@ export function initHomeAssistant() {
         console.log('Loading initial states...');
         loadToiletState();
         loadLightState();
+        loadCoffeeState();
     }
     
     function onConnected() {
@@ -48,5 +52,6 @@ export function initHomeAssistant() {
         
         resetToiletStatus();
         resetLightStatus();
+        resetCoffeeStatus();
     }
 }

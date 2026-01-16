@@ -1,57 +1,73 @@
 import { getEntityState, registerUpdateCallback, isConnected } from './ha-entityState.js';
 import { applyColorByProperty, clearColorByProperty, getViewer } from './viewer-extensions.js';
 
-// Toilet occupancy management
-const OCCUPANCY_SENSOR = 'binary_sensor.preasenzmelder_1_occupancy';
-const ROOM_PROPERTY = 'ha-Room';
-const ROOM_VALUE = 'WC';
+// Toilet configurations
+const TOILETS = [
+    {
+        id: 'men',
+        sensor: 'binary_sensor.riegelkontakt_herren_contact',
+        roomProperty: 'ha-Room',
+        roomValue: 'WC-Men',
+        label: 'Men\'s Toilet'
+    },
+    {
+        id: 'women',
+        sensor: 'binary_sensor.riegelkontakt_damen_contact',
+        roomProperty: 'ha-Room',
+        roomValue: 'WC-Women',
+        label: 'Women\'s Toilet'
+    }
+];
 
 let occupancyStatusElement = null;
-let lastState = null;
+let toiletStates = {};
 
 export function initToilet(statusElement) {
     occupancyStatusElement = statusElement;
     
-    // Register for state updates
-    registerUpdateCallback(OCCUPANCY_SENSOR, (state) => {
-        lastState = state;
-        updateToiletStatus(state);
-        applyToiletColoring(state);
+    // Register for state updates for all toilets
+    TOILETS.forEach(toilet => {
+        toiletStates[toilet.id] = null;
+        registerUpdateCallback(toilet.sensor, (state) => {
+            toiletStates[toilet.id] = state;
+            updateToiletStatus();
+            applyToiletColoring(toilet, state);
+        });
     });
 }
 
 export function loadToiletState() {
     if (isConnected()) {
-        getEntityState(OCCUPANCY_SENSOR, (state) => {
-            lastState = state;
-            updateToiletStatus(state);
-            applyToiletColoring(state);
+        TOILETS.forEach(toilet => {
+            getEntityState(toilet.sensor, (state) => {
+                toiletStates[toilet.id] = state;
+                updateToiletStatus();
+                applyToiletColoring(toilet, state);
+            });
         });
     }
 }
 
-function updateToiletStatus(state) {
+function updateToiletStatus() {
     if (!occupancyStatusElement) return;
     
-    if (state === 'on') {
-        occupancyStatusElement.textContent = '🚽 OCCUPIED';
-        occupancyStatusElement.style.color = '#f44336';
-        occupancyStatusElement.style.fontWeight = 'bold';
-        occupancyStatusElement.style.fontSize = '28px';
-    } else if (state === 'off') {
-        occupancyStatusElement.textContent = '✅ FREE';
-        occupancyStatusElement.style.color = '#4caf50';
-        occupancyStatusElement.style.fontWeight = 'bold';
-        occupancyStatusElement.style.fontSize = '28px';
-    } else {
-        occupancyStatusElement.textContent = 'Unknown';
-        occupancyStatusElement.style.color = '#999';
-        occupancyStatusElement.style.fontWeight = 'normal';
-        occupancyStatusElement.style.fontSize = '24px';
-    }
+    // Create status display for all toilets
+    const statuses = TOILETS.map(toilet => {
+        const state = toiletStates[toilet.id];
+        if (state === 'on') {
+            return `🚽 ${toilet.label}: <span style="color: #f44336; font-weight: bold;">OCCUPIED</span>`;
+        } else if (state === 'off') {
+            return `✅ ${toilet.label}: <span style="color: #4caf50; font-weight: bold;">FREE</span>`;
+        } else {
+            return `${toilet.label}: <span style="color: #999;">Unknown</span>`;
+        }
+    });
+    
+    occupancyStatusElement.innerHTML = statuses.join('<br>');
+    occupancyStatusElement.style.fontSize = '18px';
 }
 
-async function applyToiletColoring(state) {
+async function applyToiletColoring(toilet, state) {
     const viewer = getViewer();
     if (!viewer || !viewer.model) {
         console.warn('Viewer or model not ready, coloring will be applied when model loads');
@@ -59,33 +75,41 @@ async function applyToiletColoring(state) {
     }
 
     if (state === 'on') {
-        // Occupied - color WC room elements red
+        // Occupied - color room elements red
         const redColor = new THREE.Vector4(1, 0, 0, 1);
-        await applyColorByProperty(ROOM_PROPERTY, ROOM_VALUE, redColor);
-        console.log('Applied red coloring to WC room');
+        await applyColorByProperty(toilet.roomProperty, toilet.roomValue, redColor);
+        console.log(`Applied red coloring to ${toilet.label}`);
     } else if (state === 'off') {
-        // Free - color WC room elements green
+        // Free - color room elements green
         const greenColor = new THREE.Vector4(0, 1, 0, 1);
-        await applyColorByProperty(ROOM_PROPERTY, ROOM_VALUE, greenColor);
-        console.log('Applied green coloring to WC room');
+        await applyColorByProperty(toilet.roomProperty, toilet.roomValue, greenColor);
+        console.log(`Applied green coloring to ${toilet.label}`);
     } else {
-        // Unknown - clear WC room coloring
-        await clearColorByProperty(ROOM_PROPERTY, ROOM_VALUE);
-        console.log('Cleared WC room coloring');
+        // Unknown - clear room coloring
+        await clearColorByProperty(toilet.roomProperty, toilet.roomValue);
+        console.log(`Cleared coloring for ${toilet.label}`);
     }
 }
 
 export function resetToiletStatus() {
     if (!occupancyStatusElement) return;
-    lastState = null;
-    updateToiletStatus(null);
-    clearColorByProperty(ROOM_PROPERTY, ROOM_VALUE);
+    
+    // Reset all toilet states
+    TOILETS.forEach(toilet => {
+        toiletStates[toilet.id] = null;
+        clearColorByProperty(toilet.roomProperty, toilet.roomValue);
+    });
+    
+    updateToiletStatus();
 }
 
 // Re-apply coloring when a new model is loaded
 export function onModelLoaded() {
-    if (lastState !== null) {
-        console.log('Model loaded, reapplying toilet coloring for state:', lastState);
-        applyToiletColoring(lastState);
-    }
+    TOILETS.forEach(toilet => {
+        const state = toiletStates[toilet.id];
+        if (state !== null) {
+            console.log(`Model loaded, reapplying ${toilet.label} coloring for state:`, state);
+            applyToiletColoring(toilet, state);
+        }
+    });
 }

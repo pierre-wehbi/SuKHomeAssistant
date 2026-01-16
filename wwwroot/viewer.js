@@ -55,6 +55,11 @@ export function loadModel(viewer, urn) {
                         module.onModelLoaded();
                     }
                 });
+                import('./ha-coffee.js').then(module => {
+                    if (module.onModelLoaded) {
+                        module.onModelLoaded();
+                    }
+                });
             });
         };
         
